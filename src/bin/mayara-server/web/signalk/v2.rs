@@ -22,6 +22,7 @@ use tokio::sync::{
 };
 use utoipa::OpenApi;
 use utoipa::ToSchema;
+#[cfg(feature = "swagger-ui")]
 use utoipa_swagger_ui::{Config as SwaggerConfig, SwaggerUi};
 
 use crate::web::{signalk::diagnostics, spokes_handler};
@@ -122,7 +123,8 @@ const CONTROL_REPLY_TIMEOUT: std::time::Duration = std::time::Duration::from_mil
 struct ApiDoc;
 
 pub(crate) fn routes(axum: axum::Router<Web>) -> axum::Router<Web> {
-    axum.route(BASE_URI, get(get_radars))
+    let router = axum
+        .route(BASE_URI, get(get_radars))
         .route(INTERFACES_URI, get(get_interfaces))
         .route(STATUS_URI, get(get_status))
         .route(NETWORK_CHECK_URI, get(get_network_check))
@@ -145,8 +147,11 @@ pub(crate) fn routes(axum: axum::Router<Web>) -> axum::Router<Web> {
         )
         .route(RADAR_TARGETS_URI, get(get_targets).post(acquire_target))
         .route(RADAR_TARGET_URI, axum::routing::delete(delete_target))
-        .route(OPENAPI_URI, get(openapi_json))
-        .merge(SwaggerUi::new("/swagger-ui").config(SwaggerConfig::new([OPENAPI_URI])))
+        .route(OPENAPI_URI, get(openapi_json));
+    #[cfg(feature = "swagger-ui")]
+    let router =
+        router.merge(SwaggerUi::new("/swagger-ui").config(SwaggerConfig::new([OPENAPI_URI])));
+    router
 }
 
 fn openapi_spec() -> utoipa::openapi::OpenApi {

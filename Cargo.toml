@@ -30,12 +30,16 @@ pcap-replay = []
 # root. Anything that depends on the `mayara` library must therefore build
 # with `default-features = false` and leave this feature off.
 websocket-compression = ["tokio-tungstenite/deflate", "flate2/zlib-ng-compat"]
+# Serves Swagger UI for the OpenAPI spec at /swagger-ui. Only the server
+# binary uses it, and its build script downloads the Swagger UI bundle unless
+# built with `vendored`, so library consumers leave it off.
+swagger-ui = ["dep:utoipa-swagger-ui"]
 # Set by the workflows that publish an artifact, so a usage report can say
 # whether a binary is one this project released. Off by default: any build
 # that does not deliberately claim it is a local build.
 official-build = []
 # default = ["navico", "furuno", "raymarine"]
-default = ["navico", "furuno", "garmin", "koden", "raymarine", "emulator", "websocket-compression"]
+default = ["navico", "furuno", "garmin", "koden", "raymarine", "emulator", "websocket-compression", "swagger-ui"]
 
 [dependencies]
 anyhow = "1.0.102"
@@ -110,7 +114,7 @@ serde_string_enum = "0.2.1"
 uuid = { version = "1", features = ["v4"] }
 unicase = "2.9.0"
 wildmatch = "2.6.1"
-utoipa-swagger-ui = { version = "9.0.2", features = ["url", "axum"] }
+utoipa-swagger-ui = { version = "9.0.2", features = ["url", "axum"], optional = true }
 tokio-tungstenite = { version = "0.26.2", features = [ "handshake", "rustls-tls-native-roots" ] }
 reqwest = { version = "0.12.28", default-features = false, features = ["rustls-tls", "json"] }
 
