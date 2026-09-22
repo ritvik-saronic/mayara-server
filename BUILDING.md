@@ -108,6 +108,7 @@ Available features:
 - `raymarine` - Raymarine radar support (Quantum, RD, HD, Magnum, Cyclone)
 - `emulator` - Built-in radar emulator (useful for testing without hardware)
 - `pcap-replay` - PCAP capture replay support (pulls in `flate2`)
+- `websocket-compression` - permessage-deflate on the GUI spoke WebSocket (on by default). Needs the tokio-tungstenite fork from `[patch.crates-io]`, which Cargo only honors when mayara is the workspace root, so anything depending on the `mayara` library must set `default-features = false`.
 
 See [README.md](README.md) for which models are fully supported versus implemented but awaiting hardware validation.
 

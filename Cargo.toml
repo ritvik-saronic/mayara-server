@@ -24,12 +24,18 @@ koden = []
 raymarine = []
 emulator = []
 pcap-replay = []
+# permessage-deflate on the GUI spoke WebSocket (#145, #398). Upstream
+# tungstenite has no deflate support, so this rides on the forks pinned in
+# [patch.crates-io] below, and a [patch] is only honored in the workspace
+# root. Anything that depends on the `mayara` library must therefore build
+# with `default-features = false` and leave this feature off.
+websocket-compression = ["tokio-tungstenite/deflate", "flate2/zlib-ng-compat"]
 # Set by the workflows that publish an artifact, so a usage report can say
 # whether a binary is one this project released. Off by default: any build
 # that does not deliberately claim it is a local build.
 official-build = []
 # default = ["navico", "furuno", "raymarine"]
-default = ["navico", "furuno", "garmin", "koden", "raymarine", "emulator"]
+default = ["navico", "furuno", "garmin", "koden", "raymarine", "emulator", "websocket-compression"]
 
 [dependencies]
 anyhow = "1.0.102"
@@ -51,12 +57,12 @@ crossbeam = "0.8.4"
 directories = "6.0.0"
 enum-primitive-derive = "0.3.0"
 env_logger = { version = "0.11", default-features = false, features = ["humantime", "auto-color"] }
-# `zlib-ng-compat` makes libz-sys build zlib-ng instead of plain zlib while
-# keeping the zlib API tungstenite expects. zlib-ng has SIMD-accelerated
-# `longest_match` / `crc32` on aarch64 (NEON) and ~1.5-2× faster compression
-# at the same level. Feature unification routes WebSocket permessage-deflate
-# through this backend as well.
-flate2 = { version = "1", features = ["zlib-ng-compat"] }
+# The `websocket-compression` feature adds `zlib-ng-compat`, which makes
+# libz-sys build zlib-ng instead of plain zlib while keeping the zlib API
+# tungstenite expects. zlib-ng has SIMD-accelerated `longest_match` / `crc32`
+# on aarch64 (NEON) and ~1.5-2× faster compression at the same level. Feature
+# unification routes WebSocket permessage-deflate through this backend as well.
+flate2 = "1"
 futures = "0.3.32"
 futures-util = "0.3.32"
 headers = "0.4.1"
@@ -106,7 +112,7 @@ uuid = { version = "1", features = ["v4"] }
 unicase = "2.9.0"
 wildmatch = "2.6.1"
 utoipa-swagger-ui = { version = "9.0.2", features = ["url", "axum"] }
-tokio-tungstenite = { version = "0.26.2", features = [ "handshake", "deflate", "rustls-tls-native-roots" ] }
+tokio-tungstenite = { version = "0.26.2", features = [ "handshake", "rustls-tls-native-roots" ] }
 reqwest = { version = "0.12.28", default-features = false, features = ["rustls-tls", "json"] }
 
 [patch.crates-io]

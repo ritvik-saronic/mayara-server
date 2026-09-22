@@ -118,7 +118,6 @@ use tokio_tungstenite::{
     WebSocketStream,
     tungstenite::{
         self as ts,
-        extensions::ExtensionsConfig,
         protocol::{self, WebSocketConfig},
     },
 };
@@ -224,19 +223,31 @@ impl<F> WebSocketUpgrade<F> {
     /// that slide cost dominates the actual compression work.
     ///
     /// Only takes effect if the client offered `permessage-deflate` in
-    /// its `Sec-WebSocket-Extensions` request header.
+    /// its `Sec-WebSocket-Extensions` request header, and only when built
+    /// with the `websocket-compression` feature: upstream tungstenite has no
+    /// permessage-deflate, so without it the offer is declined and frames go
+    /// uncompressed.
     pub fn permessage_deflate(mut self) -> Self {
         if self.client_offers_deflate {
-            use ts::extensions::compression::deflate::DeflateConfig;
-            let mut deflate = DeflateConfig::new();
-            deflate.compression = flate2::Compression::fast();
-            let mut extensions = ExtensionsConfig::default();
-            extensions.permessage_deflate = Some(deflate);
-            self.config.extensions = extensions;
-            self.permessage_deflate = true;
+            self.enable_deflate();
         }
         self
     }
+
+    #[cfg(feature = "websocket-compression")]
+    fn enable_deflate(&mut self) {
+        use ts::extensions::ExtensionsConfig;
+        use ts::extensions::compression::deflate::DeflateConfig;
+        let mut deflate = DeflateConfig::new();
+        deflate.compression = flate2::Compression::fast();
+        let mut extensions = ExtensionsConfig::default();
+        extensions.permessage_deflate = Some(deflate);
+        self.config.extensions = extensions;
+        self.permessage_deflate = true;
+    }
+
+    #[cfg(not(feature = "websocket-compression"))]
+    fn enable_deflate(&mut self) {}
 
     /// Set the known protocols.
     ///
